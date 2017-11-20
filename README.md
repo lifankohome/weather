@@ -1,6 +1,9 @@
 # Weather Reporter
 weather reporter program using JAVA Swing.
 
+### Screeshot
+![Screenshot](https://github.com/lifankohome/weather/blob/master/screenshot.jpg?raw=true)
+
 ### Function introduction
 Show weather information of recent 7 days, What's more, the PLACE could be adjust by IP address automatic, which means that you could use this PROGRAM anywhere.
 
