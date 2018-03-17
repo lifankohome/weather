@@ -50,33 +50,37 @@ public class UI extends JFrame {
                 System.out.println("实例化UI成功！");
                 // The following code ensure the window shown on the center of screen.
                 Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-                frame.setLocation((dim.width - frame.getWidth()) / 2, (dim.height - frame.getHeight()) / 2 - 100);
+                frame.setLocation((dim.width - frame.getWidth()) / 2, (dim.height - frame.getHeight()) / 2);
                 frame.setVisible(true);// 展示UI
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             if (getIpAddress()) {// 获取公网IP
-                if(getAddressByIP(IP)){// 查询地址
+                if (getAddressByIP(IP)) {// 查询地址
                     weather();// 查询天气数据
 
-                    JsonObject basicObj = objectMain.get("basic").getAsJsonObject();// 解析数据
-                    String city = basicObj.get("city").getAsString();
-                    String update = basicObj.get("update").getAsJsonObject().get("loc").getAsString();
-                    String lat = basicObj.get("lat").getAsString();
-                    String lon = basicObj.get("lon").getAsString();
-                    String basic = "IP：" + IP +" / 城市：" + city + " / 上次更新：" + update + " / 经度：" + lat + " / 纬度：" + lon;
-                    frame.setTitle(basic);// 改变标题
+                    frame.setTitle(updateTitle());// 改变标题
 
                     load();// 绘制UI
                     System.out.println("结束！");
-                }else {
+                } else {
                     frame.setTitle("失败：无法获取城市信息");// 改变标题
                 }
-            }else {
+            } else {
                 frame.setTitle("失败：无法获取本地IP");// 改变标题
             }
         });
+    }
+
+    private static String updateTitle() {
+        JsonObject basicObj = objectMain.get("basic").getAsJsonObject();// 解析数据
+        String city = basicObj.get("city").getAsString();
+        String update = basicObj.get("update").getAsJsonObject().get("loc").getAsString();
+        String lat = basicObj.get("lat").getAsString();
+        String lon = basicObj.get("lon").getAsString();
+
+        return "IP：" + IP + " / 城市：" + city + " / 上次更新：" + update + " / 经度：" + lat + " / 纬度：" + lon;
     }
 
     public static boolean getIpAddress() {
@@ -123,14 +127,13 @@ public class UI extends JFrame {
     }
 
     public static void load() {
-        int i = 0;
-        while (i < 7) {
+        for (int i = 0; i < 7; i++) {
             JsonObject dailyForecastObj = objectMain.get("daily_forecast").getAsJsonArray().get(i).getAsJsonObject();
 
             String code_d = dailyForecastObj.get("cond").getAsJsonObject().get("code_d").getAsString();
             String txt_d = dailyForecastObj.get("cond").getAsJsonObject().get("txt_d").getAsString();
 
-            String imgUrl = "<html><img src='http://files.heweather.com/cond_icon/" + code_d + ".png' /><html>";
+            String imgUrl = "<html><img src='https://www.heweather.com/files/images/cond_icon/" + code_d + ".png' /><html>";
 
             String tmpL, tmpH;
             tmpL = dailyForecastObj.get("tmp").getAsJsonObject().get("min").getAsString() + "~";
@@ -158,7 +161,6 @@ public class UI extends JFrame {
                 frame.day6.setText(imgUrl);
                 frame.label_6.setText(txt_d + " / " + tmpL + tmpH);
             }
-            i++;
         }
     }
 
@@ -259,8 +261,8 @@ public class UI extends JFrame {
         about.setFont(new Font("微软雅黑 Light", Font.PLAIN, 12));
         menu.add(about);
         about.addActionListener(e -> JOptionPane.showMessageDialog(UI.this,
-                "<html>本程序调用【和风天气API】提供7天内天气预报功能，使用Java语言。<br><br>代码地址：https://github.com/lifankohome/weather<html>", "关于此程序：",
-                JOptionPane.PLAIN_MESSAGE));
+                "<html>本程序调用【和风天气API】提供7天内天气预报功能。<br><br>代码地址：https://github.com/lifankohome/weather<html>",
+                "关于此程序：", JOptionPane.PLAIN_MESSAGE));
 
         JMenuItem exit = new JMenuItem("\u9000\u51FA");
         exit.setFont(new Font("微软雅黑 Light", Font.PLAIN, 12));
@@ -274,16 +276,26 @@ public class UI extends JFrame {
                 new Thread(() -> {
                     status = "reload";
                     reload.setText("刷新中");
-                    weather();
-                    while (status.equals("reload")) {
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
+
+                    if (getIpAddress()) {// 获取公网IP
+                        if (getAddressByIP(IP)) {// 查询地址
+                            weather();
+                            while (status.equals("reload")) {
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e1) {
+                                    e1.printStackTrace();
+                                }
+                            }
+
+                            frame.setTitle(updateTitle());// 改变标题
+                            load();
+                            reload.setText("已刷新");
                         }
+                    } else {
+                        reload.setText("刷新失败");
+                        frame.setTitle("失败：无法获取本地IP");
                     }
-                    load();
-                    reload.setText("已刷新");
                 }).start();
             }
         });
